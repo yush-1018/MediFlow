@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { generateMockData } from '@/lib/ai/mockData';
+import { db } from '@/lib/firebase';
+import { ref, onValue, off } from 'firebase/database';
 import { MediFlowAI, RedistributionPlan, InventoryItem, Facility } from '@/lib/ai/engine';
 import { ExplainSidebar } from '@/components/ExplainSidebar';
 
@@ -14,7 +15,33 @@ export default function Home() {
   const [selectedPlan, setSelectedPlan] = useState<RedistributionPlan | null>(null);
 
   useEffect(() => {
-    setData(generateMockData());
+    const facilitiesRef = ref(db, 'facilities');
+    const inventoryRef = ref(db, 'inventory');
+
+    const unsubscribeFacilities = onValue(facilitiesRef, (snapshot) => {
+      const facilitiesData = snapshot.val();
+      if (facilitiesData) {
+        const facilitiesList = Object.values(facilitiesData) as Facility[];
+        
+        onValue(inventoryRef, (invSnapshot) => {
+          const inventoryData = invSnapshot.val();
+          if (inventoryData) {
+            const inventoryList: InventoryItem[] = [];
+            Object.values(inventoryData).forEach((facInventory: any) => {
+              Object.values(facInventory).forEach((item: any) => {
+                inventoryList.push(item);
+              });
+            });
+            setData({ facilities: facilitiesList, inventory: inventoryList });
+          }
+        });
+      }
+    });
+
+    return () => {
+      off(facilitiesRef);
+      off(inventoryRef);
+    };
   }, []);
 
   const runAnalysis = () => {
@@ -49,7 +76,15 @@ export default function Home() {
     }, 1200);
   };
 
-  if (!data) return <div style={{ background: 'var(--background)', color: 'white', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Initializing MediFlow Intelligence Core...</div>;
+  if (!data) return (
+    <div style={{ background: 'var(--background)', color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <h3 className="gradient-text">MediFlow Intelligence Engine</h3>
+      <p style={{ color: 'var(--text-muted)', marginTop: '1rem' }}>Connecting to Real-time Supply Network...</p>
+      <p style={{ fontSize: '0.7rem', marginTop: '2rem', maxWidth: '300px', textAlign: 'center' }}>
+        Note: If this stays loading, please ensure your Firebase credentials are set in .env.local and mock data is seeded.
+      </p>
+    </div>
+  );
 
   const riskCount = data.inventory.filter(i => {
     const d = new Date(i.expiryDate);
@@ -93,7 +128,7 @@ export default function Home() {
         <div className="card">
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Network Nodes</p>
           <h3 style={{ fontSize: '2rem', marginTop: '0.5rem' }}>{data.facilities.length}</h3>
-          <p style={{ color: 'var(--secondary)', fontSize: '0.8rem', marginTop: '0.5rem' }}>↑ 12 active today</p>
+          <p style={{ color: 'var(--secondary)', fontSize: '0.8rem', marginTop: '0.5rem' }}>Live Connection Active</p>
         </div>
         <div className="card">
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Expiry Risks</p>
@@ -125,7 +160,7 @@ export default function Home() {
           <section className="card" style={{ minHeight: '400px' }}>
             <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               Regional Intelligence Map
-              {simulationMode && <span className="glass" style={{ padding: '0.2rem 0.5rem', fontSize: '0.6rem', color: 'var(--accent)' }}>SIMULATING COLD-CHAIN BURST</span>}
+              <span className="glass" style={{ padding: '0.2rem 0.5rem', fontSize: '0.6rem', color: 'var(--secondary)' }}>LIVE SYNC</span>
             </h2>
             <div style={{ 
               width: '100%', 
@@ -175,7 +210,7 @@ export default function Home() {
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '420px', paddingRight: '0.5rem' }}>
               {plans.length === 0 ? (
                 <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-                  <p style={{ color: 'var(--text-muted)' }}>Scan network nodes for optimization routes.</p>
+                  <p style={{ color: 'var(--text-muted)' }}>Scan live network for optimization routes.</p>
                 </div>
               ) : (
                 plans.map((p, i) => (
