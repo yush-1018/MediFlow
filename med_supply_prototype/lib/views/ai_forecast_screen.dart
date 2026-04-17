@@ -205,7 +205,7 @@ class _AIForecastScreenState extends State<AIForecastScreen> {
   }
 
   Widget _buildActionButtons(int predicted) {
-    final status = predicted > widget.stock.currentStock ? "Critical" : "Stable";
+    final status = predicted > widget.stock.qtyRemaining ? "Critical" : "Stable";
     return Row(
       children: [
         Expanded(

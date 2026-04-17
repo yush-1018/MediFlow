@@ -3,46 +3,47 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper: Check if user is authenticated
+    // --- Helper Functions ---
+    
     function isSignedIn() {
       return request.auth != null;
     }
     
-    // Helper: Get user data from users collection
     function getUserData() {
+      // Returns the user document from the users collection
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
-    // Helper: Check if user is an admin
     function isCmsAdmin() {
       return isSignedIn() && getUserData().role == 'cms_admin';
     }
     
-    // Helper: Check if user is head of a specific facility
     function isFacilityHead(facilityId) {
       return isSignedIn() && 
              getUserData().role == 'facility_head' && 
              getUserData().facilityId == facilityId;
     }
 
-    // --- Rules for Users Collection ---
+    // --- Collection Rules ---
+
+    // Users Collection
     match /users/{uid} {
-      allow read: if isSignedIn();
-      allow write: if false; // Users should be managed via Admin SDK/Cloud Functions for safety
+      allow read: if isSignedIn() && (request.auth.uid == uid || isCmsAdmin());
+      allow write: if false; // Security: Managed via Firebase Admin/Auth triggers
     }
 
-    // --- Rules for Facilities Collection ---
+    // Facilities Collection
     match /facilities/{facilityId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn(); // Facility Head can browse map, CMS Admin sees all
       allow write: if isCmsAdmin(); 
       
-      // Subcollection: Stocks
+      // Stocks Subcollection
       match /stocks/{stockId} {
         allow read: if isCmsAdmin() || isFacilityHead(facilityId);
         allow write: if isCmsAdmin() || isFacilityHead(facilityId);
       }
       
-      // Subcollection: Usage Logs
+      // Usage Logs Subcollection
       match /usage_logs/{logId} {
         allow read: if isCmsAdmin() || isFacilityHead(facilityId);
         allow create: if isFacilityHead(facilityId);
@@ -50,11 +51,16 @@ service cloud.firestore {
       }
     }
 
-    // --- Rules for Requests Collection ---
+    // Requests Collection
     match /requests/{requestId} {
       allow read: if isSignedIn();
+      
+      // A facility_head can create requests
       allow create: if isSignedIn() && getUserData().role == 'facility_head';
-      allow update: if isCmsAdmin(); // Only Admin can approve/reject
+      
+      // Only a cms_admin can update request status (Approve/Reject)
+      allow update: if isCmsAdmin();
+      
       allow delete: if false;
     }
   }

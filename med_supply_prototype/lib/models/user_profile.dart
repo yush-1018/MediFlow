@@ -9,7 +9,7 @@ enum UserRole {
 
   static UserRole fromString(String val) {
     return UserRole.values.firstWhere(
-      (e) => e.value == val,
+      (e) => e.value == val.toLowerCase(),
       orElse: () => UserRole.facilityHead,
     );
   }
@@ -18,9 +18,10 @@ enum UserRole {
 class UserProfile {
   final String uid;
   final String email;
-  final UserRole role;
-  final String? facilityId; // Null for CMS Admin
-  final String displayName;
+  final UserRole role; // Updated back to Enum for logic
+  final String? facilityId;
+  final String? facilityName; // Restored for UI
+  final String displayName; // Step 3 rename
 
   UserProfile({
     required this.uid,
@@ -37,7 +38,8 @@ class UserProfile {
       email: data['email'] ?? '',
       role: UserRole.fromString(data['role'] ?? 'facility_head'),
       facilityId: data['facilityId'],
-      displayName: data['displayName'] ?? '',
+      facilityName: data['facilityName'],
+      displayName: data['displayName'] ?? data['name'] ?? 'Unknown User',
     );
   }
 
@@ -46,17 +48,8 @@ class UserProfile {
       'email': email,
       'role': role.value,
       'facilityId': facilityId,
+      'facilityName': facilityName,
       'displayName': displayName,
     };
   }
 }
-
-/**
- * Example Document:
- * {
- *   "email": "aarush@medsupply.com",
- *   "role": "facility_head",
- *   "facilityId": "city_general_hospital",
- *   "displayName": "Aarush Yadav"
- * }
- */

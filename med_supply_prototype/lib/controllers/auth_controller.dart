@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile.dart';
@@ -26,7 +27,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() => _service.signIn(email, password));
   }
 
-  Future<void> logout() async {
+  Future<void> signOut() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => _service.signOut());
   }

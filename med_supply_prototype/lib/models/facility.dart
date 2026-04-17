@@ -4,6 +4,10 @@ class Facility {
   final String id;
   final String name;
   final GeoPoint location;
+  final double latitude;
+  final double longitude;
+  final double healthScore;
+  final String type;
   final String district;
   final String adminEmail;
   final DateTime createdAt;
@@ -12,6 +16,10 @@ class Facility {
     required this.id,
     required this.name,
     required this.location,
+    required this.latitude,
+    required this.longitude,
+    required this.healthScore,
+    required this.type,
     required this.district,
     required this.adminEmail,
     required this.createdAt,
@@ -19,13 +27,18 @@ class Facility {
 
   factory Facility.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data() as Map<String, dynamic>;
+    GeoPoint loc = data['location'] ?? const GeoPoint(0, 0);
     return Facility(
       id: doc.id,
       name: data['name'] ?? '',
-      location: data['location'] ?? const GeoPoint(0, 0),
+      location: loc,
+      latitude: data['latitude']?.toDouble() ?? loc.latitude,
+      longitude: data['longitude']?.toDouble() ?? loc.longitude,
+      healthScore: data['healthScore']?.toDouble() ?? 100.0,
+      type: data['type'] ?? 'Hospital',
       district: data['district'] ?? '',
       adminEmail: data['adminEmail'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -33,20 +46,13 @@ class Facility {
     return {
       'name': name,
       'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
+      'healthScore': healthScore,
+      'type': type,
       'district': district,
       'adminEmail': adminEmail,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }
-
-/**
- * Example Document:
- * {
- *   "name": "City General Hospital",
- *   "location": GeoPoint(28.6139, 77.2090),
- *   "district": "New Delhi",
- *   "adminEmail": "admin@cityhospital.com",
- *   "createdAt": Timestamp(seconds=1620000000)
- * }
- */

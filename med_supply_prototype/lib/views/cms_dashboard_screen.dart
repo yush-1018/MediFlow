@@ -8,7 +8,7 @@ class CMSDashboardScreen extends ConsumerWidget {
   const CMSDashboardScreen({super.key});
 
   @override
-  Widget build(Widget context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(

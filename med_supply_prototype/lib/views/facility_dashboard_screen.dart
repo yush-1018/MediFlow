@@ -4,12 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/inventory_controller.dart';
 import '../models/stock.dart';
+import 'log_usage_dialog.dart';
 
 class FacilityDashboardScreen extends ConsumerWidget {
   const FacilityDashboardScreen({super.key});
 
   @override
-  Widget build(Widget context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(userProfileProvider).value;
     final metrics = ref.watch(dashboardMetricsProvider);
     final filteredStocks = ref.watch(filteredStocksProvider);
@@ -279,7 +280,7 @@ class _StockCard extends StatelessWidget {
             const Spacer(),
             Row(
               children: [
-                _buildMetric("Stock", "${stock.currentStock} ${stock.unit}"),
+                _buildMetric("Stock", "${stock.qtyRemaining} ${stock.unit}"),
                 const SizedBox(width: 24),
                 _buildMetric("Expiry", "${stock.daysUntilExpiry}d", 
                   isWarning: stock.daysUntilExpiry < 90),
@@ -287,7 +288,7 @@ class _StockCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             LinearProgressIndicator(
-              value: stock.currentStock / (stock.minStockThreshold * 3), // Visual ratio
+              value: stock.qtyRemaining / (stock.reorderLevel * 3), // Visual ratio
               backgroundColor: Colors.grey[200],
               color: stock.isLowStock ? Colors.orange : Colors.blue,
               minHeight: 6,

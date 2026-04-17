@@ -5,12 +5,12 @@ class Stock {
   final String medicineName;
   final String genericName;
   final String batchNumber;
-  final int qtyRemaining;
+  final int qtyRemaining; // Step 3 rename
   final int qtyTotal;
   final String unit;
   final DateTime expiryDate;
   final String category;
-  final int reorderLevel;
+  final int reorderLevel; // Step 3 rename
   final DateTime updatedAt;
 
   Stock({
@@ -34,13 +34,13 @@ class Stock {
       medicineName: data['medicineName'] ?? '',
       genericName: data['genericName'] ?? '',
       batchNumber: data['batchNumber'] ?? '',
-      qtyRemaining: data['qtyRemaining'] ?? 0,
+      qtyRemaining: data['qtyRemaining'] ?? data['currentStock'] ?? 0,
       qtyTotal: data['qtyTotal'] ?? 0,
       unit: data['unit'] ?? '',
-      expiryDate: (data['expiryDate'] as Timestamp).toDate(),
+      expiryDate: (data['expiryDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       category: data['category'] ?? '',
-      reorderLevel: data['reorderLevel'] ?? 0,
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      reorderLevel: data['reorderLevel'] ?? data['minStockThreshold'] ?? 0,
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -59,24 +59,7 @@ class Stock {
     };
   }
 
-  // UI Helper: Get expiry status
+  // UI Helpers
   int get daysUntilExpiry => expiryDate.difference(DateTime.now()).inDays;
-  
   bool get isLowStock => qtyRemaining <= reorderLevel;
 }
-
-/**
- * Example Document (Subcollection of facilities):
- * {
- *   "medicineName": "Paracetamol 500mg",
- *   "genericName": "Acetaminophen",
- *   "batchNumber": "BN-2024-X1",
- *   "qtyRemaining": 150,
- *   "qtyTotal": 500,
- *   "unit": "Tablets",
- *   "expiryDate": Timestamp(seconds=1735689600), // Dec 31, 2024
- *   "category": "Analgesic",
- *   "reorderLevel": 100,
- *   "updatedAt": Timestamp.now()
- * }
- */

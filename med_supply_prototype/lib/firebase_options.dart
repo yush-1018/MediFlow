@@ -5,15 +5,6 @@ import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
-///
-/// Example:
-/// ```dart
-/// import 'firebase_options.dart';
-/// // ...
-/// await Firebase.initializeApp(
-///   options: DefaultFirebaseOptions.currentPlatform,
-/// );
-/// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -22,28 +13,23 @@ class DefaultFirebaseOptions {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+          'DefaultFirebaseOptions have not been configured for android.',
         );
       case TargetPlatform.iOS:
         throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+          'DefaultFirebaseOptions have not been configured for ios.',
         );
       case TargetPlatform.macOS:
         throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+          'DefaultFirebaseOptions have not been configured for macos.',
         );
       case TargetPlatform.windows:
         throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+          'DefaultFirebaseOptions have not been configured for windows.',
         );
       case TargetPlatform.linux:
         throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+          'DefaultFirebaseOptions have not been configured for linux.',
         );
       default:
         throw UnsupportedError(
@@ -52,14 +38,12 @@ class DefaultFirebaseOptions {
     }
   }
 
-  // NOTE: Replace these placeholder values with your actual Firebase Web Config
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyA_PLACEHOLDER_KEY_FOLLOW_STEP_2',
-    authDomain: 'med-supply-prototype.firebaseapp.com',
-    projectId: 'med-supply-prototype',
-    storageBucket: 'med-supply-prototype.appspot.com',
-    messagingSenderId: '1234567890',
-    appId: '1:1234567890:web:abcdef123456',
-    measurementId: 'G-ABCDEF1234',
+    apiKey: 'AIzaSyAwLlcINjBjouKasJJ3cpJS5VeSQ1Y7SWc',
+    authDomain: 'mediflow-97c01.firebaseapp.com',
+    projectId: 'mediflow-97c01',
+    storageBucket: 'mediflow-97c01.firebasestorage.app',
+    messagingSenderId: '325908625328',
+    appId: '1:325908625328:web:8fe9991c9d014965ff4875',
   );
 }

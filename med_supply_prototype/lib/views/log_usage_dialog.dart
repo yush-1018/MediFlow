@@ -25,7 +25,7 @@ class _LogUsageDialogState extends State<LogUsageDialog> {
       return;
     }
 
-    if (count > widget.stock.currentStock) {
+    if (count > widget.stock.qtyRemaining) {
       setState(() => _error = "Insufficient stock available");
       return;
     }
@@ -37,10 +37,13 @@ class _LogUsageDialogState extends State<LogUsageDialog> {
 
     try {
       final user = ref.read(userProfileProvider).value;
+      if (user?.facilityId == null) throw Exception("User facility not found");
+
       await InventoryService().logUsage(
+        user!.facilityId!,
         widget.stock.id, 
         count, 
-        user?.name ?? "Unknown User"
+        user.displayName // Step 3 rename
       );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -64,7 +67,7 @@ class _LogUsageDialogState extends State<LogUsageDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Available: ${widget.stock.currentStock} ${widget.stock.unit}",
+            "Available: ${widget.stock.qtyRemaining} ${widget.stock.unit}",
             style: GoogleFonts.outfit(color: Colors.grey[600]),
           ),
           const SizedBox(height: 20),
@@ -89,7 +92,7 @@ class _LogUsageDialogState extends State<LogUsageDialog> {
           builder: (context, ref, child) => ElevatedButton(
             onPressed: _isLoading ? null : () => _submit(ref),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[800],
+              backgroundColor: const Color(0xFF10B981), // Emerald Medical Theme
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

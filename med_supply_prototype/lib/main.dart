@@ -13,6 +13,7 @@ void main() async {
   );
 
   runApp(
+    // Step 2: ProviderScope wrapping the entire app for state management
     const ProviderScope(
       child: MedSupplyApp(),
     ),
@@ -24,40 +25,39 @@ class MedSupplyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch our global routerProvider to reactive handle auth state changes
+    // Watch global routerProvider for auth-reactive navigation
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'MedSupply MVP',
+      title: 'MedSupply',
       debugShowCheckedModeBanner: false,
       
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0EA5E9),
+          seedColor: const Color(0xFF10B981), // Updated Medical Emerald Primary
           brightness: Brightness.light,
         ),
         textTheme: GoogleFonts.outfitTextTheme(),
         
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.grey.shade200),
+            side: BorderSide(color: Colors.grey.shade100),
           ),
           color: Colors.white,
         ),
         
-        // Premium ElevatedButton styling
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
       ),
       
-      // Hooking up the go_router instance
       routerConfig: router,
     );
   }

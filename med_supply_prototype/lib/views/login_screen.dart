@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controllers/auth_controller.dart';
@@ -14,6 +15,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isSeeding = false;
 
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
@@ -143,17 +145,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                       const SizedBox(height: 16),
                       TextButton.icon(
-                        onPressed: () async {
-                          await SeedDataService().runSeed();
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Database seeded! Use facility@medsupply.com to login.")),
-                            );
+                        onPressed: _isSeeding ? null : () async {
+                          setState(() => _isSeeding = true);
+                          try {
+                            await SeedDataService().runSeed();
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("✅ Database seeded! Use facility@medsupply.com"),
+                                  backgroundColor: Colors.green,
+                                  duration: Duration(seconds: 4),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("❌ Seed Failed: $e"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setState(() => _isSeeding = false);
                           }
                         },
-                        icon: const Icon(Icons.bolt, color: Colors.amber, size: 18),
+                        icon: _isSeeding 
+                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.bolt, color: Colors.amber, size: 18),
                         label: Text(
-                          "Run Diagnostic Seed (Hackathon Demo)",
+                          _isSeeding ? "Seeding Data..." : "Run Diagnostic Seed (Hackathon Demo)",
                           style: GoogleFonts.outfit(color: Colors.grey[600], fontSize: 13),
                         ),
                       ),

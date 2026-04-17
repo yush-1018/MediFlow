@@ -1,104 +1,139 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math';
 
 class SeedDataService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   Future<void> runSeed() async {
-    print("Starting seeding process...");
+    print("🚀 Starting Production Schema Seeding...");
 
-    // 1. Create Facilities
+    // 1. Create Facilities (Top-level)
     final facilities = [
       {
         'id': 'f1',
         'name': 'AIIMS Delhi',
+        'district': 'South Delhi',
+        'adminEmail': 'admin.aiims@hospital.org',
         'latitude': 28.5672,
         'longitude': 77.2100,
-        'type': 'Hospital',
-        'healthScore': 45.0,
       },
       {
         'id': 'f2',
         'name': 'Safdarjung Hospital',
+        'district': 'South Delhi',
+        'adminEmail': 'admin.safdar@hospital.org',
         'latitude': 28.5665,
         'longitude': 77.2065,
-        'type': 'Hospital',
-        'healthScore': 85.0,
       },
       {
         'id': 'f3',
         'name': 'Max Super Speciality',
+        'district': 'South East Delhi',
+        'adminEmail': 'admin.max@hospital.org',
         'latitude': 28.5284,
         'longitude': 77.2188,
-        'type': 'Private Clinic',
-        'healthScore': 92.0,
-      },
-      {
-        'id': 'f4',
-        'name': 'Apollo Hospital',
-        'latitude': 28.5414,
-        'longitude': 77.2842,
-        'type': 'Hospital',
-        'healthScore': 30.0,
       },
     ];
 
     for (var f in facilities) {
-      await _db.collection('facilities').doc(f['id'] as String).set(f);
+      final facilityRef = _db.collection('facilities').doc(f['id'] as String);
       
-      // 2. Add Stocks for each facility
+      await facilityRef.set({
+        'name': f['name'],
+        'district': f['district'],
+        'adminEmail': f['adminEmail'],
+        'location': GeoPoint(f['latitude'] as double, f['longitude'] as double),
+        'latitude': f['latitude'], // Added for easier map coordinate access
+        'longitude': f['longitude'],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      
+      // 2. Add Stocks (Subcollection of each facility)
+      // Step 3 Schema: medicineName, genericName, batchNumber, qtyRemaining, qtyTotal, unit, expiryDate, category, reorderLevel, updatedAt
       final medicines = [
-        {'name': 'Paracetamol', 'generic': 'Acetaminophen', 'cat': 'Analgesic', 'unit': 'Strips'},
-        {'name': 'Amoxicillin', 'generic': 'Amoxicillin', 'cat': 'Antibiotic', 'unit': 'Vials'},
+        {'name': 'Paracetamol 500mg', 'generic': 'Acetaminophen', 'cat': 'Analgesic', 'unit': 'Strips'},
+        {'name': 'Amoxicillin 250mg', 'generic': 'Amoxicillin', 'cat': 'Antibiotic', 'unit': 'Vials'},
         {'name': 'Insulin Glargine', 'generic': 'Insulin', 'cat': 'Endocrine', 'unit': 'Cartridges'},
-        {'name': 'Remdesivir', 'generic': 'Antiviral', 'cat': 'Antiviral', 'unit': 'Vials'},
         {'name': 'Dexamethasone', 'generic': 'Steriod', 'cat': 'Anti-inflammatory', 'unit': 'Tablets'},
       ];
 
       for (var med in medicines) {
-        final stock = {
-          'facilityId': f['id'],
+        await facilityRef.collection('stocks').add({
           'medicineName': med['name'],
           'genericName': med['generic'],
-          'category': med['cat'],
-          'currentStock': Random().nextInt(500) + 10,
-          'minStockThreshold': 100,
+          'batchNumber': 'BATCH-${Random().nextInt(99999)}',
+          'qtyRemaining': Random().nextInt(500) + 10,
+          'qtyTotal': 1000,
           'unit': med['unit'],
-          'expiryDate': DateTime.now().add(Duration(days: Random().nextInt(365))).toIso8601String(),
+          'expiryDate': Timestamp.fromDate(DateTime.now().add(Duration(days: 100 + Random().nextInt(500)))),
+          'category': med['cat'],
+          'reorderLevel': 100,
           'updatedAt': FieldValue.serverTimestamp(),
-        };
-        await _db.collection('stocks').add(stock);
+        });
+      }
+
+      // 3. Add Usage Logs (Subcollection of each facility)
+      // Step 3 Schema: stockId, medicineName, qtyUsed, loggedBy, loggedAt, notes
+      await facilityRef.collection('usage_logs').add({
+        'stockId': 'demo_stock_id',
+        'medicineName': 'Paracetamol 500mg',
+        'qtyUsed': 50,
+        'loggedBy': 'demo_facility_head',
+        'loggedAt': FieldValue.serverTimestamp(),
+        'notes': 'Daily outpatient distribution',
+      });
+    }
+
+    // 4. Create Users (Step 3 fields)
+    // uid, email, role, facilityId, displayName
+    
+    // Facility Head
+    await _db.collection('users').doc('demo_facility_head').set({
+      'email': 'facility@medsupply.com',
+      'role': 'facility_head',
+      'facilityId': 'f1',
+      'displayName': 'Dr. Aarush Yadav',
+    });
+
+    // CMS Admin
+    await _db.collection('users').doc('demo_cms_admin').set({
+      'email': 'admin@medsupply.com',
+      'role': 'cms_admin',
+      'displayName': 'Network Administrator',
+    });
+
+    // 5. Create Requests (Step 3 fields)
+    // fromFacilityId, toFacilityId, medicineName, qtyRequested, status, createdAt, resolvedAt, resolvedBy
+    await _db.collection('requests').add({
+      'fromFacilityId': 'f2',
+      'toFacilityId': 'f1',
+      'medicineName': 'Amoxicillin 250mg',
+      'qtyRequested': 150,
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+      'resolvedAt': null,
+      'resolvedBy': null,
+    });
+
+    // 6. Create Auth Credentials
+    final auth = FirebaseAuth.instance;
+    final demoUsers = [
+      {'email': 'facility@medsupply.com', 'password': 'password123'},
+      {'email': 'admin@medsupply.com', 'password': 'password123'},
+    ];
+
+    for (var user in demoUsers) {
+      try {
+        await auth.createUserWithEmailAndPassword(
+          email: user['email']!, 
+          password: user['password']!
+        );
+      } catch (e) {
+        print("Auth account already exists for ${user['email']}");
       }
     }
 
-    // 3. Create a Demo User (Facility Head)
-    await _db.collection('users').doc('demo_facility_head').set({
-      'name': 'Dr. Aarush Yadav',
-      'email': 'facility@medsupply.com',
-      'role': 'FACILITY_HEAD',
-      'facilityId': 'f1',
-      'facilityName': 'AIIMS Delhi',
-    });
-
-    // 4. Create a CMS Admin
-    await _db.collection('users').doc('demo_cms_admin').set({
-      'name': 'Network Admin',
-      'email': 'admin@medsupply.com',
-      'role': 'CMS_ADMIN',
-    });
-
-    // 5. Create Pending Requests
-    await _db.collection('requests').add({
-      'sourceFacilityId': 'f2',
-      'sourceFacilityName': 'Safdarjung Hospital',
-      'destinationFacilityId': 'f1',
-      'destinationFacilityName': 'AIIMS Delhi',
-      'medicineName': 'Amoxicillin',
-      'quantity': 50,
-      'status': 'PENDING',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    print("Seeding complete!");
+    print("✅ Production Schema Seeding Complete!");
   }
 }
