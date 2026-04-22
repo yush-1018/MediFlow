@@ -55,6 +55,30 @@ class SimulationService {
       }
     }
     if (dayFutures.isNotEmpty) await Future.wait(dayFutures);
+
+    // 3. Reset inventory to realistic remaining levels after simulation
+    // Without this, 120 days of simulated usage depletes everything to 0
+    await _resetInventoryLevels(facilityId);
+  }
+
+  Future<void> _resetInventoryLevels(String facilityId) async {
+    final medsSnapshot = await _firestore
+        .collection('inventory')
+        .doc(facilityId)
+        .collection('medicines')
+        .get();
+
+    for (var doc in medsSnapshot.docs) {
+      final data = doc.data();
+      final int initial = data['initialQuantity'] ?? 2000;
+      // Set remaining to 30-70% of initial for realistic dashboard view
+      final double factor = 0.3 + (_random.nextDouble() * 0.4);
+      final int remaining = (initial * factor).round();
+      await doc.reference.update({
+        'remainingQuantity': remaining,
+        'lastUpdated': Timestamp.now(),
+      });
+    }
   }
 
   Future<void> _seedInventory(String facilityId) async {
@@ -119,28 +143,7 @@ class SimulationService {
       }
 
       int unitsUsed = (totalPatients * usagePerPatient * (0.9 + _random.nextDouble() * 0.2)).round();
-      
-      // Check inventory and update
-      final medicineId = med.toLowerCase().replaceAll(' ', '_');
-      final invRef = _firestore
-          .collection('inventory')
-          .doc(facilityId)
-          .collection('medicines')
-          .doc(medicineId);
-
-      final invDoc = await invRef.get();
-      if (invDoc.exists) {
-        int remaining = invDoc.data()?['remainingQuantity'] ?? 0;
-        int actualDeduction = min(unitsUsed, remaining);
-        
-        if (actualDeduction > 0) {
-          await invRef.update({
-            'remainingQuantity': remaining - actualDeduction,
-            'lastUpdated': Timestamp.fromDate(date),
-          });
-          usages.add(MedicineUsage(medicineName: med, unitsDistributed: actualDeduction));
-        }
-      }
+      usages.add(MedicineUsage(medicineName: med, unitsDistributed: unitsUsed));
     }
 
     // 3. Write Daily Log

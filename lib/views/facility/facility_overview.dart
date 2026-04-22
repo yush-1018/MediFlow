@@ -48,8 +48,8 @@ class FacilityOverview extends ConsumerWidget {
             ],
             onSelected: (value) async {
               if (value == 'signout') {
-                await FirebaseAuth.instance.signOut();
                 if (context.mounted) context.go('/');
+                await FirebaseAuth.instance.signOut();
               } else if (value != 'header') {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('${value[0].toUpperCase()}${value.substring(1)} settings coming in a future update.')),

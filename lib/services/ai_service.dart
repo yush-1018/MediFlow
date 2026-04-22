@@ -8,7 +8,7 @@ import '../models/request.dart';
 import '../models/facility.dart';
 import '../models/inventory_item.dart';
 
-const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: 'AIzaSyAIFZIZWQOw6XGqIZ_jlR6x5MXPpLKWySc');
+final String geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
 final aiServiceProvider = Provider<AIService>((ref) {
   return AIService();
 });

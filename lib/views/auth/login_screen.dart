@@ -30,7 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(firebaseServiceProvider).seedDemoData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Database seeded! Log in using urban@mediflow.com / password123')),
+          const SnackBar(content: Text('Database seeded! Log in using delhi@mediflow.com / delhi@123 or sonipat@mediflow.com / sonipat@123')),
         );
       }
     } catch (e) {

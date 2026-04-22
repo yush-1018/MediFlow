@@ -55,3 +55,6 @@ backend/__pycache__/
 backend/.venv/
 mobile/.dart_tool/
 mobile/build/
+
+# Cloud Functions
+functions/node_modules/

@@ -29,6 +29,7 @@ final GlobalKey<NavigatorState> _adminShellNavigatorKey = GlobalKey<NavigatorSta
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

@@ -93,8 +93,8 @@ class SidebarLayout extends StatelessWidget {
                     icon: const Icon(Icons.logout),
                     tooltip: 'Logout',
                     onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
                       if (context.mounted) context.go('/');
+                      await FirebaseAuth.instance.signOut();
                     },
                   ),
                 ),

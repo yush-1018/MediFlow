@@ -252,8 +252,8 @@ class FirebaseService {
 
     // 3. Seed new facilities
     final List<Map<String, String>> demoFacilities = [
-      {'name': 'Delhi Central Hospital', 'type': 'urban', 'email': 'urban@mediflow.com'},
-      {'name': 'Sonipat Rural Clinic', 'type': 'rural', 'email': 'rural@mediflow.com'},
+      {'name': 'Delhi Central Hospital', 'type': 'urban', 'email': 'delhi@mediflow.com', 'password': 'delhi@123'},
+      {'name': 'Sonipat Rural Clinic', 'type': 'rural', 'email': 'sonipat@mediflow.com', 'password': 'sonipat@123'},
     ];
 
     for (var f in demoFacilities) {
@@ -261,7 +261,7 @@ class FirebaseService {
         await signUpFacility(
           name: f['name']!,
           email: f['email']!,
-          password: 'password123',
+          password: f['password']!,
           type: f['type'],
         );
       } catch (e) {
