@@ -32,6 +32,9 @@ class FirebaseService {
     required String email,
     required String password,
     String? type,
+    double? fixedLat,
+    double? fixedLng,
+    String? fixedRegion,
   }) async {
     // 1. Generate a deterministic ID from email to bypass Auth dependency
     // This ensures Firestore docs are created even if Auth rate limits hit.
@@ -53,10 +56,10 @@ class FirebaseService {
       id: facilityId,
       name: name,
       email: email,
-      type: profile['type'],
-      region: profile['region'],
-      latitude: profile['latitude'],
-      longitude: profile['longitude'],
+      type: type ?? profile['type'],
+      region: fixedRegion ?? profile['region'],
+      latitude: fixedLat ?? profile['latitude'],
+      longitude: fixedLng ?? profile['longitude'],
       createdAt: (profile['createdAt'] as Timestamp).toDate(),
     );
 
@@ -278,15 +281,15 @@ class FirebaseService {
       }
 
       // 3. Seed new facilities
-      final List<Map<String, String>> demoFacilities = [
-        {'name': 'PHC Rampur', 'type': 'rural', 'email': 'rampur@mediflow.com', 'password': 'password123'},
-        {'name': 'CHC Modinagar', 'type': 'urban', 'email': 'modinagar@mediflow.com', 'password': 'password123'},
-        {'name': 'PHC Loni', 'type': 'urban', 'email': 'loni@mediflow.com', 'password': 'password123'},
-        {'name': 'DH Ghaziabad', 'type': 'urban', 'email': 'ghaziabad@mediflow.com', 'password': 'password123'},
-        {'name': 'PHC Bhojpur', 'type': 'rural', 'email': 'bhojpur@mediflow.com', 'password': 'password123'},
-        {'name': 'CHC Hapur', 'type': 'urban', 'email': 'hapur@mediflow.com', 'password': 'password123'},
-        {'name': 'PHC Dasna', 'type': 'rural', 'email': 'dasna@mediflow.com', 'password': 'password123'},
-        {'name': 'SubCentre Pilkhuwa', 'type': 'rural', 'email': 'pilkhuwa@mediflow.com', 'password': 'password123'},
+      final List<Map<String, dynamic>> demoFacilities = [
+        {'name': 'PHC Rampur', 'type': 'rural', 'email': 'rampur@mediflow.com', 'password': 'password123', 'region': 'North District', 'lat': 28.6139, 'lng': 77.2090},
+        {'name': 'CHC Modinagar', 'type': 'urban', 'email': 'modinagar@mediflow.com', 'password': 'password123', 'region': 'East Zone', 'lat': 28.6500, 'lng': 77.3000},
+        {'name': 'PHC Loni', 'type': 'urban', 'email': 'loni@mediflow.com', 'password': 'password123', 'region': 'North District', 'lat': 28.7000, 'lng': 77.2800},
+        {'name': 'DH Ghaziabad', 'type': 'urban', 'email': 'ghaziabad@mediflow.com', 'password': 'password123', 'region': 'Central Hub', 'lat': 28.6600, 'lng': 77.4200},
+        {'name': 'PHC Bhojpur', 'type': 'rural', 'email': 'bhojpur@mediflow.com', 'password': 'password123', 'region': 'West Sector', 'lat': 28.7500, 'lng': 77.5000},
+        {'name': 'CHC Hapur', 'type': 'urban', 'email': 'hapur@mediflow.com', 'password': 'password123', 'region': 'East Zone', 'lat': 28.7200, 'lng': 77.7800},
+        {'name': 'PHC Dasna', 'type': 'rural', 'email': 'dasna@mediflow.com', 'password': 'password123', 'region': 'Central Hub', 'lat': 28.6800, 'lng': 77.5200},
+        {'name': 'SubCentre Pilkhuwa', 'type': 'rural', 'email': 'pilkhuwa@mediflow.com', 'password': 'password123', 'region': 'West Sector', 'lat': 28.7100, 'lng': 77.6500},
       ];
 
       for (var f in demoFacilities) {
@@ -296,6 +299,9 @@ class FirebaseService {
             email: f['email']!,
             password: f['password']!,
             type: f['type'],
+            fixedLat: f['lat'],
+            fixedLng: f['lng'],
+            fixedRegion: f['region'],
           );
           // Delay to avoid auth rate limits
           await Future.delayed(const Duration(milliseconds: 1500));
@@ -309,7 +315,7 @@ class FirebaseService {
       final String f1Id = demoFacilities[0]['email']!.toLowerCase().replaceAll('@', '_').replaceAll('.', '_');
       final String f2Id = demoFacilities[1]['email']!.toLowerCase().replaceAll('@', '_').replaceAll('.', '_');
       
-      await createRequest(MedRequest(
+      await addRequest(MedRequest(
         id: '', 
         facilityId: f1Id, 
         medicineName: 'Antibiotic', 
@@ -320,7 +326,7 @@ class FirebaseService {
         notes: 'Stock critically low due to seasonal surge.'
       ));
 
-      await createRequest(MedRequest(
+      await addRequest(MedRequest(
         id: '', 
         facilityId: f2Id, 
         medicineName: 'Paracetamol', 
@@ -331,7 +337,7 @@ class FirebaseService {
         notes: 'Excess stock arriving soon, offering for redistribution.'
       ));
 
-      await createRequest(MedRequest(
+      await addRequest(MedRequest(
         id: '', 
         facilityId: f1Id, 
         medicineName: 'ORS', 
