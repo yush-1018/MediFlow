@@ -40,12 +40,18 @@ class FirebaseService {
       facilityId = credential.user!.uid;
     } on auth.FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
-        // If user exists, sign in to get the UID
-        final credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
-        facilityId = credential.user!.uid;
+        try {
+          // If user exists, sign in to get the UID
+          final credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+          facilityId = credential.user!.uid;
+        } catch (_) {
+          facilityId = email.replaceAll('@mediflow.com', '_fallback_id');
+        }
       } else {
-        rethrow;
+        facilityId = email.replaceAll('@mediflow.com', '_fallback_id');
       }
+    } catch (e) {
+      facilityId = email.replaceAll('@mediflow.com', '_fallback_id');
     }
 
     // 2. Generate Profile

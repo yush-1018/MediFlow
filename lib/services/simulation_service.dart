@@ -41,12 +41,12 @@ class SimulationService {
     // 1. Initialize Inventory if not exists
     await _seedInventory(facilityId);
 
-    // 2. Simulate last 120 days using a single WriteBatch
+    // 2. Simulate last 30 days using a single WriteBatch
     final now = DateTime.now();
     var batch = _firestore.batch();
     int writeCount = 0;
 
-    for (int i = 120; i >= 0; i--) {
+    for (int i = 30; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       _addSimulateDayToBatch(batch, facilityId, facilityType, date);
       writeCount++;
