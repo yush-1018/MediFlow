@@ -107,7 +107,7 @@ final _router = GoRouter(
       routes: [
         GoRoute(path: '/admin/overview', builder: (context, state) => const AdminOverview()),
         GoRoute(path: '/admin/approvals', builder: (context, state) => const AdminIndentApprovalPage()),
-        GoRoute(path: '/admin/indent-status', builder: (context, state) => const AdminIndentStatusPage()),
+        GoRoute(path: '/admin/supply-status', builder: (context, state) => const AdminIndentStatusPage()),
         GoRoute(path: '/admin/routing', builder: (context, state) => const RouteOptimizationMap()),
         GoRoute(path: '/admin/chat', builder: (context, state) => const AIChatPage(role: 'admin')),
         GoRoute(path: '/admin/help', builder: (context, state) => const HelpPage(role: 'admin')),

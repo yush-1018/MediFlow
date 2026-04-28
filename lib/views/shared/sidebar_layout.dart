@@ -41,7 +41,7 @@ class _SidebarLayoutState extends ConsumerState<SidebarLayout> {
     } else {
       if (location.endsWith('/overview')) return 0;
       if (location.endsWith('/approvals')) return 1;
-      if (location.endsWith('/indent-status')) return 2;
+      if (location.endsWith('/supply-status')) return 2;
       if (location.endsWith('/routing')) return 3;
       if (location.endsWith('/chat')) return 4;
       if (location.endsWith('/help')) return 5;
@@ -64,7 +64,7 @@ class _SidebarLayoutState extends ConsumerState<SidebarLayout> {
       switch (index) {
         case 0: context.go('/admin/overview'); break;
         case 1: context.go('/admin/approvals'); break;
-        case 2: context.go('/admin/indent-status'); break;
+        case 2: context.go('/admin/supply-status'); break;
         case 3: context.go('/admin/routing'); break;
         case 4: context.go('/admin/chat'); break;
         case 5: context.go('/admin/help'); break;
@@ -85,7 +85,7 @@ class _SidebarLayoutState extends ConsumerState<SidebarLayout> {
       : [
           _NavItem(Icons.dashboard_rounded, 'Overview'),
           _NavItem(Icons.rule_rounded, 'Approvals'),
-          _NavItem(Icons.history_rounded, 'Indent Status'),
+          _NavItem(Icons.history_rounded, 'Supply Status'),
           _NavItem(Icons.map_rounded, 'Route Opt.'),
           _NavItem(Icons.smart_toy_rounded, 'AI Chat'),
           _NavItem(Icons.help_outline_rounded, 'Help'),
