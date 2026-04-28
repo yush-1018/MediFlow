@@ -18,6 +18,8 @@
 - [Project Overview](#project-overview)
 - [The Problem & Solution](#the-problem--the-solution)
 - [Core Feature Set](#core-feature-set)
+  - [Hospital / Facility Module](#hospital--facility-module)
+  - [Central Administration Module](#central-administration-module)
 - [Technical Architecture](#technical-architecture)
 - [Project Structure](#project-structure)
 - [Data & Schema](#data--schema)
@@ -38,16 +40,23 @@
 
 ## Core Feature Set
 
-| Module | Feature | Detailed Description |
-| :--- | :--- | :--- |
-| **Hospital / Facility** | **Smart Logging Engine** | Atomically track daily usage while the system computes burn rates in real-time, ensuring zero data loss even in low-connectivity areas. |
-| **Hospital / Facility** | **AI Forecasting (30-Day)** | Powered by **Gemini-1.5-Flash**, predicting seasonal spikes based on historical usage trends (e.g., ORS demand for summer) with a transparency-first "AI Reasoning" component. |
-| **Hospital / Facility** | **Automated Request Drafting** | Intelligent auto-population of restock indents and redistribution offers based on AI predictions, reducing administrative overhead for clinic managers. |
-| **Hospital / Facility** | **AI Chat Assistant** | A 24/7 logistics expert that facility managers can query for stock status, expiry alerts, or burn-rate insights using natural language. |
-| **Central Admin** | **Global Command Center** | Real-time regional oversight with deep-dive analytics into every facility's stock health, parity, and regional logistics KPIs. |
-| **Central Admin** | **Approval Pipeline** | A secure hub for regional admins to review, edit, and prioritize redistribution plans proposed by the optimization engine. |
-| **Central Admin** | **Interactive Logistics Map** | High-visibility markers distinguishing surplus sites from deficit clinics with integrated OSRM/ORS paths that calculate real-world travel time and distance. |
-| **Central Admin** | **Global Optimization** | A "Global Redistribution Plan" that matches thousands of shortage items to local surpluses in seconds using our proprietary matching logic. |
+### Hospital / Facility Module
+
+| Feature | Detailed Description |
+| :--- | :--- |
+| **Smart Logging Engine** | Atomically track daily usage while the system computes burn rates in real-time, ensuring zero data loss even in low-connectivity areas. |
+| **AI Forecasting (30-Day)** | Powered by **Gemini-1.5-Flash**, predicting seasonal spikes based on historical usage trends (e.g., ORS demand for summer) with a transparency-first "AI Reasoning" component. |
+| **Automated Request Drafting** | Intelligent auto-population of restock indents and redistribution offers based on AI predictions, reducing administrative overhead for clinic managers. |
+| **AI Chat Assistant** | A 24/7 logistics expert that facility managers can query for stock status, expiry alerts, or burn-rate insights using natural language. |
+
+### Central Administration Module
+
+| Feature | Detailed Description |
+| :--- | :--- |
+| **Global Command Center** | Real-time regional oversight with deep-dive analytics into every facility's stock health, parity, and regional logistics KPIs. |
+| **Approval Pipeline** | A secure hub for regional admins to review, edit, and prioritize redistribution plans proposed by the optimization engine. |
+| **Interactive Logistics Map** | High-visibility markers distinguishing surplus sites from deficit clinics with integrated OSRM/ORS paths that calculate real-world travel time and distance. |
+| **Global Optimization** | A "Global Redistribution Plan" that matches thousands of shortage items to local surpluses in seconds using our proprietary matching logic. |
 
 ---
 
