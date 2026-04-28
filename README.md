@@ -2,21 +2,14 @@
   <img src="https://img.shields.io/badge/Google%20Solution%20Challenge-2026-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Solution Challenge 2026">
 </p>
 
-# MediFlow
-**Open Intelligent Cold-Chain Supply Chain Platform for Pharmaceutical Logistics**
+<h1 align="center">MediFlow</h1>
+<p align="center"><b>AI-powered medical logistics platform focused on smart resource allocation</b></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white" alt="Flutter">
   <img src="https://img.shields.io/badge/Firebase-039BE5?style=for-the-badge&logo=Firebase&logoColor=white" alt="Firebase">
   <img src="https://img.shields.io/badge/Gemini%20AI-8E75B2?style=for-the-badge&logo=google-gemini&logoColor=white" alt="Gemini AI">
   <img src="https://img.shields.io/badge/OpenRouteService-3E3E3E?style=for-the-badge&logo=openstreetmap&logoColor=white" alt="ORS">
-</p>
-
-<p align="center">
-  <a href="#project-overview">Problem</a> •
-  <a href="#the-problem--the-solution">Solution</a> •
-  <a href="#technical-architecture">Architecture</a> •
-  <a href="#the-team">Team</a>
 </p>
 
 ---
@@ -186,4 +179,4 @@ Built with ❤️ for the **Google Solution Challenge 2026**.
 - [Sharvi Singhal]
 
 ---
-© 2026 MediFlow Team. *Engineering a smarter, healthier supply chain.*
+<p align="center">© 2026 MediFlow Team. <i>Engineering a smarter, healthier supply chain.</i></p>
