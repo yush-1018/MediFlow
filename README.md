@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Google%20Solution%20Challenge-2026-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Solution Challenge 2026">
-</p>
-
 <h1 align="center">MediFlow</h1>
 <p align="center"><b>AI-powered medical logistics platform focused on smart resource allocation</b></p>
 
