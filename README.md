@@ -179,7 +179,7 @@ flutter run -d chrome --web-renderer html
 ---
 
 ## The Team
-Built with ❤️ for the **Google Solution Challenge 2026**.
+Built with ❤️
 
 - [Aarush Yadav]
 - [Paavni Bansal]
