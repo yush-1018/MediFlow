@@ -27,17 +27,24 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ### Local Project Setup
 
-1. **Fork and Clone:**
+1. **Star the Repository:**
+   Before you start, please **⭐ star the repository ⭐** on GitHub to show your support!
+2. **Fork and Clone:**
    Fork the repository on GitHub and clone your fork locally:
    ```bash
    git clone https://github.com/your-username/MediFlow.git
    cd MediFlow
    ```
-2. **Fetch Packages:**
+3. **Add Upstream Remote:**
+   Add the original repository as an upstream remote to keep your fork synced:
+   ```bash
+   git remote add upstream https://github.com/pavsoss/MediFlow.git
+   ```
+4. **Fetch Packages:**
    ```bash
    flutter pub get
    ```
-3. **Configure Environment Variables:**
+5. **Configure Environment Variables:**
    Create a `.env` file in the root of the project:
    ```ini
    GEMINI_API_KEY=your_gemini_api_key_here
