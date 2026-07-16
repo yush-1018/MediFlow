@@ -5,6 +5,42 @@ const { BigQuery } = require("@google-cloud/bigquery");
 
 admin.initializeApp();
 
+async function getUserFacilityAndRole(context, db) {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "User must log in");
+  }
+
+  const userEmail = context.auth.token.email.toLowerCase();
+  const isAdmin = userEmail === "admin@mediflow.com";
+  let userFacilityId = null;
+
+  if (!isAdmin) {
+    const docId = userEmail.replace(/@/g, "_").replace(/\./g, "_");
+    const facilityDoc = await db.collection("facilities").doc(docId).get();
+    if (!facilityDoc.exists) {
+      // Fallback query by email field
+      const facilitiesSnapshot = await db.collection("facilities")
+        .where("email", "==", userEmail)
+        .limit(1)
+        .get();
+      if (facilitiesSnapshot.empty) {
+        throw new functions.https.HttpsError("failed-precondition", "No facility assigned to this user");
+      }
+      userFacilityId = facilitiesSnapshot.docs[0].id;
+    } else {
+      userFacilityId = docId;
+    }
+  }
+
+  return {
+    userEmail,
+    userFacilityId,
+    isAdmin,
+    role: isAdmin ? "admin" : "facility_head",
+  };
+}
+
+
 const bigquery = new BigQuery();
 const BQ_DATASET = process.env.BQ_DATASET || "mediflow_analytics";
 const BQ_LOCATION = process.env.BQ_LOCATION || "US";
@@ -196,6 +232,11 @@ exports.forecastDemand = functions.runWith({ secrets: ["GEMINI_API_KEY"] }).http
   const { facilityId, medicineNames } = data;
   const db = admin.firestore();
 
+  const authInfo = await getUserFacilityAndRole(context, db);
+  if (!authInfo.isAdmin && facilityId !== authInfo.userFacilityId) {
+    throw new functions.https.HttpsError('permission-denied', 'Unauthorized facility access');
+  }
+
   // 1. Fetch facility details
   const facilityDoc = await db.collection("facilities").doc(facilityId).get();
   const facility = facilityDoc.data();
@@ -268,6 +309,13 @@ exports.forecastDemand = functions.runWith({ secrets: ["GEMINI_API_KEY"] }).http
  */
 exports.logAIDecision = functions.https.onCall(async (data, context) => {
   if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "User must log in");
+
+  const db = admin.firestore();
+  const authInfo = await getUserFacilityAndRole(context, db);
+  const { facilityId } = data;
+  if (!authInfo.isAdmin && facilityId !== authInfo.userFacilityId) {
+    throw new functions.https.HttpsError("permission-denied", "Unauthorized facility access");
+  }
 
   const decisionId = data.decisionId || `${Date.now()}_${Math.random().toString(36).slice(2)}`;
   await insertBigQuery("ai_decisions", {
@@ -551,10 +599,13 @@ exports.onIndentApproved = functions.firestore
     }
   });
 
-async function executeTool(name, args) {
+async function executeTool(name, args, authInfo) {
   const db = admin.firestore();
   if (name === "report_shortage" || name === "report_surplus") {
     const { facilityId, medicineName, quantity } = args;
+    if (!authInfo.isAdmin && facilityId !== authInfo.userFacilityId) {
+      throw new Error(`Unauthorized: Cannot request for facility ${facilityId}`);
+    }
     const type = name === "report_shortage" ? "shortage" : "surplus";
     await db.collection("requests").add({
       facilityId: facilityId,
@@ -567,6 +618,24 @@ async function executeTool(name, args) {
     });
     return { status: "success", details: `${type} reported for ${quantity} of ${medicineName}` };
   } else if (name === "check_system_inventory") {
+    if (!authInfo.isAdmin) {
+      const facilityDoc = await db.collection("facilities").doc(authInfo.userFacilityId).get();
+      const fac = facilityDoc.data();
+      const systemStock = {};
+      const invSnapshot = await db.collection("inventory")
+        .doc(authInfo.userFacilityId)
+        .collection("medicines")
+        .get();
+      systemStock[fac.name || authInfo.userFacilityId] = invSnapshot.docs.map((medDoc) => {
+        const item = medDoc.data();
+        return {
+          name: item.medicineName,
+          remaining: item.remainingQuantity,
+          initial: item.initialQuantity,
+        };
+      });
+      return { status: "success", system_inventory: systemStock };
+    }
     const facilitiesSnapshot = await db.collection("facilities").get();
     const systemStock = {};
     for (const doc of facilitiesSnapshot.docs) {
@@ -593,6 +662,9 @@ async function executeTool(name, args) {
 exports.getForecastSecure = functions.runWith({ secrets: ["GEMINI_API_KEY"] }).https.onCall(async (data, context) => {
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'User must log in');
 
+  const db = admin.firestore();
+  await getUserFacilityAndRole(context, db);
+
   const { medicineName, logs, daysToForecast } = data;
   const logSummary = logs
     .map(l => `Date: ${l.date}, Used: ${l.used}`)
@@ -613,6 +685,9 @@ exports.getForecastSecure = functions.runWith({ secrets: ["GEMINI_API_KEY"] }).h
 
 exports.generateSmartAlertsSecure = functions.runWith({ secrets: ["GEMINI_API_KEY"] }).https.onCall(async (data, context) => {
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'User must log in');
+
+  const db = admin.firestore();
+  await getUserFacilityAndRole(context, db);
 
   const { inventory } = data;
   const payload = inventory
@@ -637,6 +712,13 @@ exports.getChatResponseSecure = functions.runWith({ secrets: ["GEMINI_API_KEY"] 
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'User must log in');
 
   const { query, context: clientContext, role, history } = data;
+  const db = admin.firestore();
+  const authInfo = await getUserFacilityAndRole(context, db);
+
+  if (!authInfo.isAdmin && clientContext && clientContext.current_facility_id && clientContext.current_facility_id !== authInfo.userFacilityId) {
+    throw new functions.https.HttpsError('permission-denied', 'Unauthorized facility access in chat context');
+  }
+
   const contextStr = JSON.stringify(clientContext);
 
   const prompt = `Role: ${role}\nSystem Blueprint: System Name: MediFlow AI Intelligence\nArchitecture: Medical Logistics Optimization Platform\nCore Data Models:\n- Facility: {id, name, type: rural/urban, region, coordinates}\n- InventoryItem: {medicineName, batchId, remainingQuantity, initialQuantity, expiryDate, arrivalDate}\n- DailyUsageLog: {date, totalPatients, medicines: [{medicineName, unitsDistributed}]}\n- MedRequest: {id, facilityId, medicineName, quantity, status: pending/fulfilled}\nBusiness Logic:\n1. Burn Rate: Calculated as unitsDistributed / days.\n2. Shipment Strategy: Optimal split of 1yr supply into 1-3 months (Active) and the rest (Cold Storage) based on seasonal historical logs.\n3. Cold Storage: Sub-collection where excess stock is "parked" to improve inventory floor-space efficiency.\n\nCurrent Data: ${contextStr}\nUser Query: ${query}\nAnswer naturally using the blueprint and data.`;
@@ -696,7 +778,7 @@ exports.getChatResponseSecure = functions.runWith({ secrets: ["GEMINI_API_KEY"] 
       for (const call of result.response.functionCalls) {
         let executionResult;
         try {
-          executionResult = await executeTool(call.name, call.args);
+          executionResult = await executeTool(call.name, call.args, authInfo);
         } catch (e) {
           executionResult = { error: e.message };
         }
@@ -719,6 +801,9 @@ exports.getChatResponseSecure = functions.runWith({ secrets: ["GEMINI_API_KEY"] 
 
 exports.callGeminiSecure = functions.runWith({ secrets: ["GEMINI_API_KEY"] }).https.onCall(async (data, context) => {
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'User must log in');
+
+  const db = admin.firestore();
+  await getUserFacilityAndRole(context, db);
 
   const { prompt, imageBase64, imageMimeType } = data;
   try {
