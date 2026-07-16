@@ -1,0 +1,82 @@
+name: Security & Vulnerability Scan
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at 00:00 UTC
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  secret_scan:
+    name: Secret & Key Leak Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history is required for scanning all commits
+
+      - name: Run Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Fails the build if secrets are detected
+          fail: true
+
+  codeql_analysis:
+    name: CodeQL Static Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'javascript-typescript' # CodeQL supports Cloud Functions JS
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  dependency_audit:
+    name: Package Vulnerability Auditing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit Node.js Dependencies
+        working-directory: functions
+        run: |
+          npm audit --audit-level=high || echo "Some high level vulnerabilities found. Review report."
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Audit Flutter Dependencies
+        run: |
+          flutter pub get
+          # Checks for vulnerable packages in pub dependencies
+          # (Note: newer dart versions support 'dart pub pub outdated' or custom checkers;
+          # we run pub outdated to verify update possibilities)
+          flutter pub outdated

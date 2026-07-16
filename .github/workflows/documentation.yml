@@ -1,0 +1,39 @@
+name: Documentation Check
+
+on:
+  push:
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/workflows/documentation.yml'
+  workflow_dispatch:
+
+jobs:
+  doc_lint:
+    name: Markdown Lint & Link Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Lint Markdown Files
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: |
+            **/*.md
+            !node_modules/**
+            !.dart_tool/**
+
+      - name: Verify Hyperlinks
+        uses: lycheeverse/lychee-action@v2.0.0
+        with:
+          args: --verbose --no-progress '**/*.md'
+          fail: false # Don't break build for external web link failures, but report them
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
