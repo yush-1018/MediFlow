@@ -217,7 +217,7 @@ MediFlow utilizes a hierarchical Firestore schema designed for high-concurrency 
 5. **Run the Application:**
    For local web prototype development, run:
    ```bash
-   flutter run -d chrome --web-renderer html
+   flutter run -d chrome
    ```
 
 ---
@@ -235,7 +235,7 @@ If compilation fails with an error indicating `.env` does not exist:
 
 ### 2. Web Map Fails to Render (CORS or Rendering mode)
 If the map does not display in your web browser:
-- Ensure you run the app using `--web-renderer html`. The default CanvasKit renderer sometimes encounters issues fetching tiles from OpenStreetMap.
+- If the CanvasKit renderer encounters issues fetching tiles from OpenStreetMap due to CORS, check your OpenRouteService API key and network settings. Ensure all Firebase dependencies are up to date.
 - Verify that your OpenRouteService API key is valid and has not exceeded its request limit.
 
 ### 3. Cloud Functions Authentication Errors
