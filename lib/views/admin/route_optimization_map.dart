@@ -22,7 +22,6 @@ class RouteOptimizationMap extends ConsumerStatefulWidget {
 class _RouteOptimizationMapState extends ConsumerState<RouteOptimizationMap> {
   final MapController _mapController = MapController();
   List<Facility> _facilities = [];
-  Map<String, List<InventoryItem>> _allInventories = {};
   bool _isLoading = true;
   bool _showRoutes = false;
   bool _isGenerating = false;
@@ -48,32 +47,25 @@ class _RouteOptimizationMapState extends ConsumerState<RouteOptimizationMap> {
     }
   }
 
-  void _updateInventoriesFromStream(List<InventoryItem> allMeds) {
-    Map<String, List<InventoryItem>> newInventories = {};
-    for (var med in allMeds) {
-      if (med.facilityId != null) {
-        newInventories.putIfAbsent(med.facilityId!, () => []).add(med);
-      }
-    }
-
-    if (mounted && newInventories.isNotEmpty) {
-      setState(() {
-        _allInventories = newInventories;
-      });
-    }
-  }
-
-  Future<void> _generateOptimalRoutes(List<MedRequest> requests) async {
+  Future<void> _generateOptimalRoutes(
+      List<MedRequest> requests, List<InventoryItem> allMeds) async {
     setState(() => _isGenerating = true);
     try {
       final optimizer = ref.read(optimizationServiceProvider);
       final router = ref.read(routingServiceProvider);
       final ai = ref.read(aiServiceProvider);
 
+      Map<String, List<InventoryItem>> inventories = {};
+      for (var med in allMeds) {
+        if (med.facilityId != null) {
+          inventories.putIfAbsent(med.facilityId!, () => []).add(med);
+        }
+      }
+
       // 1. Calculate optimal transfers grouped into multi-stop routes
       final multiRoutes = optimizer.calculateMultiStopRoutes(
         facilities: _facilities,
-        inventories: _allInventories,
+        inventories: inventories,
         requests: requests,
       );
 
@@ -126,9 +118,7 @@ class _RouteOptimizationMapState extends ConsumerState<RouteOptimizationMap> {
       body: StreamBuilder<List<InventoryItem>>(
         stream: ref.watch(firebaseServiceProvider).streamAllMedicines(),
         builder: (context, invSnapshot) {
-          if (invSnapshot.hasData) {
-            _updateInventoriesFromStream(invSnapshot.data!);
-          }
+          final allMeds = invSnapshot.data ?? [];
 
           return StreamBuilder<List<MedRequest>>(
             stream: ref.watch(firebaseServiceProvider).streamRequests(null),
@@ -204,8 +194,8 @@ class _RouteOptimizationMapState extends ConsumerState<RouteOptimizationMap> {
                                         : 'Generate Optimal Routes'),
                                     onPressed: _isGenerating
                                         ? null
-                                        : () =>
-                                            _generateOptimalRoutes(requests),
+                                        : () => _generateOptimalRoutes(
+                                            requests, allMeds),
                                   ),
                                 ),
                               ),
@@ -550,8 +540,10 @@ class _RouteOptimizationMapState extends ConsumerState<RouteOptimizationMap> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 8.0,
+            runSpacing: 4.0,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -618,8 +610,10 @@ class _RouteOptimizationMapState extends ConsumerState<RouteOptimizationMap> {
                   fontSize: 11,
                   fontStyle: FontStyle.italic)),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 8.0,
+            runSpacing: 4.0,
             children: [
               Row(children: [
                 const Icon(Icons.route_rounded,
