@@ -1,5 +1,5 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onDocumentWritten, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
@@ -545,64 +545,13 @@ exports.checkLowStock = onSchedule("every 24 hours", async () => {
  * 3. autoRedistribute(requestId)
  * Atomic stock transfer when a request is approved.
  */
-exports.onIndentApproved = onDocumentUpdated('requests/{requestId}', async (event) => {
-  const beforeStatus = event.data.before.data().status;
-  const after = event.data.after.data();
-
-  // Only fire if status changed to 'approved'
-  if (beforeStatus === 'pending' && after.status === 'approved') {
-    const db = admin.firestore();
-
-    const { fromFacilityId, toFacilityId, medicineName, qtyRequested } = after;
-
-    // 1. Find source stock (toFacilityId - the surplus provider)
-    const sourceStockQuery = await db.collection("facilities")
-      .doc(toFacilityId)
-      .collection("stocks")
-      .where("medicineName", "==", medicineName)
-      .limit(1)
-      .get();
-
-    // 2. Find destination stock (fromFacilityId - the requester)
-    const destStockQuery = await db.collection("facilities")
-      .doc(fromFacilityId)
-      .collection("stocks")
-      .where("medicineName", "==", medicineName)
-      .limit(1)
-      .get();
-
-    if (sourceStockQuery.empty || destStockQuery.empty) {
-      logger.error("Stock documents not found for redistribution");
-      return;
-    }
-
-    const sourceDoc = sourceStockQuery.docs[0];
-    const destDoc = destStockQuery.docs[0];
-
-    // 3. Execute atomic batch write
-    const batch = db.batch();
-
-    // Decrement source
-    batch.update(sourceDoc.ref, {
-      qtyRemaining: admin.firestore.FieldValue.increment(-qtyRequested),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    // Increment destination
-    batch.update(destDoc.ref, {
-      qtyRemaining: admin.firestore.FieldValue.increment(qtyRequested),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    // Update request resolution
-    batch.update(event.data.after.ref, {
-      resolvedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    await batch.commit();
-    logger.log(`Redistribution successful: ${qtyRequested} units of ${medicineName} from ${toFacilityId} to ${fromFacilityId}`);
-  }
-});
+/**
+ * Note: The legacy onIndentApproved trigger has been removed because the database
+ * schema was updated to inventory/{facilityId}/medicines/{medicineId} and MedRequest
+ * does not store both donor and recipient fields (e.g., fromFacilityId/toFacilityId).
+ * Stock transfer and redistribution logic is now client-driven via optimization_service.dart
+ * and restock.
+ */
 
 async function executeTool(name, args, authInfo) {
   const db = admin.firestore();
