@@ -559,12 +559,17 @@ exports.checkLowStock = onSchedule("every 24 hours", async () => {
  * Atomic stock transfer when a request is approved.
  */
 exports.onIndentApproved = onDocumentUpdated("requests/{requestId}", async (event) => {
-  const beforeData = event.data.before ? event.data.before.data() : null;
-  const afterData = event.data.after ? event.data.after.data() : null;
+  if (!event || !event.data || !event.data.after || !event.data.after.exists) return;
 
-  if (!beforeData || !afterData) return;
+  const beforeSnap = event.data.before;
+  const afterSnap = event.data.after;
 
-  const beforeStatus = beforeData.status;
+  const beforeData = beforeSnap && beforeSnap.exists ? beforeSnap.data() : null;
+  const afterData = afterSnap ? afterSnap.data() : null;
+
+  if (!afterData) return;
+
+  const beforeStatus = beforeData ? beforeData.status : null;
   const afterStatus = afterData.status;
 
   // Execute only when request transitions to 'approved' status
